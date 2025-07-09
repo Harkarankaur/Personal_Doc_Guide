@@ -31,6 +31,7 @@ Prompt Chaining	LangChain
 ├── .env                    # API keys and environment variables
 ├── requirements.txt        # Python dependencies
 └── README.md               # Project documentation
+
 ✅ Requirements
  
  Python 3.10+
