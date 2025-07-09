@@ -26,7 +26,7 @@ Prompt Chaining	LangChain
 
 📂 Project Structure
 📦 Secretary
-│
+
 ├── bot.py                  # Streamlit app entry point
 ├── .env                    # API keys and environment variables
 ├── requirements.txt        # Python dependencies
