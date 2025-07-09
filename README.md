@@ -25,7 +25,7 @@ Document Parsing	PyPDF
 Prompt Chaining	LangChain
 
 📂 Project Structure
-📦 Guide
+📦 Secretary
 │
 ├── bot.py                  # Streamlit app entry point
 ├── .env                    # API keys and environment variables
