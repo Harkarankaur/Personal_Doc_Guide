@@ -49,11 +49,12 @@ streamlit run app.py
 📌 To-Do
 Add support for multi-document querying
 
+Add feature to perform url based queries
+
 Enhance prompt templates
 
 Save chat history
 
-Add citation sources
 
 🧑‍💻 Author
 Name: Harkaranjit Kaur
