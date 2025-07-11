@@ -9,7 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-
+import shutil
 
 load_dotenv()
 
@@ -72,7 +72,7 @@ if uploaded_file is not None:
             retriever=vectordb.as_retriever()
             )
 
-        st.success("Document processed. Ask your questions below 👇")
+        st.success("Document processed. Ask your questions below :")
 
         # User input
         query = st.text_input("Ask a question about the document:")
@@ -81,6 +81,11 @@ if uploaded_file is not None:
             with st.spinner("Thinking..."):
                 result = qa.run(query)
                 st.markdown(f"**Answer:** {result}")
+            try: 
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                st.warning(f"cleanup failed:{e}")
 
 else: 
-    st.info("📄 Please upload a PDF file to get started.")
+    st.info(" Please upload a PDF file to get started.")
