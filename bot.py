@@ -38,9 +38,8 @@ input_text=st.text_input("search the topic you want")
 
 with st.sidebar:
     st.title("Docs for query:")
-    uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"], key="pdf_upload")
-    uploaded_file = st.file_uploader("Upload a Word document", type=["docx"], key="word_upload")
-    file_type = uploaded_file.type
+    uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf","docx"], key="doc_upload")
+    
 #open ai llm call
 
 output_parser=StrOutputParser()
@@ -49,7 +48,7 @@ chain=prompt|llm|output_parser
 
 ##Document
 if uploaded_file is not None:
-    with st.spinner("Reading and indexing your document..."):
+        file_name = uploaded_file.name
 
         # Save file temporarily
         file_path = os.path.join("temp", uploaded_file.name)
@@ -57,11 +56,12 @@ if uploaded_file is not None:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
         # Load and split
-        if uploaded_file.type=="application/pdf":
-            loader = PyPDFLoader(file_path)
-        elif uploaded_file.type=="application/vnd.openxmlformats-officedocument.wordprocessingml.document":    
-            loader =Docx2txtLoader(file_path)
-        docs = loader.load()
+        with st.spinner("Reading and indexing your document..."):
+            if file_name.endswith(".pdf"):
+                loader = PyPDFLoader(file_path)
+            elif file_name.endswith(".docx"):      
+                loader = Docx2txtLoader(file_path)
+            docs = loader.load()
 
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = splitter.split_documents(docs)
@@ -84,14 +84,17 @@ if uploaded_file is not None:
                     with st.spinner("searching your document"):
                         result = qa.run(input_text)
                         st.markdown(f"**Answer:** {result}")
-                else:
+                    if st.button("End query")
+                       try: 
+                          if os.path.exists(file_path):
+                          os.remove(file_path)
+                       except Exception as e:
+                          st.warning(f"cleanup failed:{e}")
+
+
+        else:
                     st.info("Ask your questions..")
                 
-            try: 
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            except Exception as e:
-                st.warning(f"cleanup failed:{e}")
 elif uploaded_file is None:
         if input_text:
             with st.spinner("Searching..."):
