@@ -40,7 +40,7 @@ with st.sidebar:
     st.title("Docs for query:")
     uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"], key="pdf_upload")
     uploaded_file = st.file_uploader("Upload a Word document", type=["docx"], key="word_upload")
-
+    file_type = uploaded_file.type
 #open ai llm call
 
 output_parser=StrOutputParser()
@@ -57,8 +57,10 @@ if uploaded_file is not None:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
         # Load and split
-        loader = PyPDFLoader(file_path)
-        loader =Docx2txtLoader(file_path)
+        if uploaded_file.type=="application/pdf":
+            loader = PyPDFLoader(file_path)
+        elif uploaded_file.type=="application/vnd.openxmlformats-officedocument.wordprocessingml.document":    
+            loader =Docx2txtLoader(file_path)
         docs = loader.load()
 
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
