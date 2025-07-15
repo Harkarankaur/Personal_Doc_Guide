@@ -80,10 +80,13 @@ if uploaded_file is not None:
 
         # User input
        
-        if input_text:
-            with st.spinner("Thinking..."):
-                result = qa.run(query)
-                st.markdown(f"**Answer:** {result}")
+       if input_text is not None:
+                    with st.spinner("searching your document"):
+                        result = qa.run(input_text)
+                        st.markdown(f"**Answer:** {result}")
+                else:
+                    st.info("Ask your questions..")
+                
             try: 
                 if os.path.exists(file_path):
                     os.remove(file_path)
