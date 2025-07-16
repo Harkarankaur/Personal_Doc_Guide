@@ -88,6 +88,9 @@ if uploaded_file is not None:
                        try: 
                           if os.path.exists(file_path):
                           os.remove(file_path)
+                         if os.path.exists("temp") and not os.listdir("temp"):
+                            os.rmdir("temp")  # delete the folder if it's empty
+
                        except Exception as e:
                           st.warning(f"cleanup failed:{e}")
 
