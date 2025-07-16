@@ -48,6 +48,7 @@ chain=prompt|llm|output_parser
 
 ##Document
 if uploaded_file is not None:
+     with st.spinner("Reading and indexing your document..."):
         file_name = uploaded_file.name
 
         # Save file temporarily
@@ -55,8 +56,19 @@ if uploaded_file is not None:
         os.makedirs("temp", exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
+        if st.button("End query"):
+                    try:
+                        if os.path.exists(file_path):
+                            os.remove(file_path)  # delete the uploaded file
+                        # If you want to delete the whole folder:
+                        if os.path.exists("temp"):
+                            os.rmdir("temp")  # delete the folder if it's empty
+                    except Exception as e:
+                        st.warning(f" Cleanup failed: {e}")                    
+
         # Load and split
-        with st.spinner("Reading and indexing your document..."):
+       else:
+       
             if file_name.endswith(".pdf"):
                 loader = PyPDFLoader(file_path)
             elif file_name.endswith(".docx"):      
@@ -81,20 +93,12 @@ if uploaded_file is not None:
         # User input
        
        if input_text is not None:
+            if os.path.exists(file_path):
                     with st.spinner("searching your document"):
                         result = qa.run(input_text)
                         st.markdown(f"**Answer:** {result}")
-                    if st.button("End query")
-                       try: 
-                          if os.path.exists(file_path):
-                          os.remove(file_path)
-                         if os.path.exists("temp") and not os.listdir("temp"):
-                            os.rmdir("temp")  # delete the folder if it's empty
-
-                       except Exception as e:
-                          st.warning(f"cleanup failed:{e}")
-
-
+            else:
+                st.info("upload your file again..")
         else:
                     st.info("Ask your questions..")
                 
