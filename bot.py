@@ -48,7 +48,8 @@ chain=prompt|llm|output_parser
 
 ##Document
 if uploaded_file is not None:
-     with st.spinner("Reading and indexing your document..."):
+  if input_text: 
+    with st.spinner("processing your query..."):
         file_name = uploaded_file.name
 
         # Save file temporarily
@@ -59,9 +60,10 @@ if uploaded_file is not None:
         # Load and split
             if file_name.endswith(".pdf"):
                 loader = PyPDFLoader(file_path)
+                docs = loader.load()
             elif file_name.endswith(".docx"):      
                 loader = Docx2txtLoader(file_path)
-            docs = loader.load()
+                docs = loader.load()
 
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = splitter.split_documents(docs)
@@ -76,24 +78,23 @@ if uploaded_file is not None:
             retriever=vectordb.as_retriever()
             )
 
-        st.success("Document processed. Ask your questions below :")
+        st.success("Document processed. Answering your questions :")
 
         # User input
        
-       if input_text is not None:
-            if os.path.exists(file_path):
+       
+         if os.path.exists(file_path):
                     with st.spinner("searching your document"):
                         result = qa.run(input_text)
                         st.markdown(f"**Answer:** {result}")
-            else:
-                st.info("upload your file again..")
-        else:
-                    st.info("Ask your questions..")
-                
-elif uploaded_file is None:
+if uploaded_file is None:
         if input_text:
             with st.spinner("Searching..."):
                 st.write(chain.invoke({'question':input_text}))
+        else:
+          st.info("Ask your questions..")  
 
 else: 
-    st.info(" Please upload a PDF file to get started.")
+    if uploaded_file is None:
+        if input_text is None:
+           st.info(" Please upload a PDF file to get started.")
