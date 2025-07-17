@@ -14,6 +14,7 @@ from docx import Document
 from langchain.document_loaders import Docx2txtLoader
 
 
+
 load_dotenv()
 
 
@@ -38,26 +39,38 @@ input_text=st.text_input("search the topic you want")
 
 with st.sidebar:
     st.title("Docs for query:")
-    uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf","docx"], key="doc_upload")
-    
+    uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx"], key="doc_upload")
+
 #open ai llm call
 
 output_parser=StrOutputParser()
 ##chain
 chain=prompt|llm|output_parser
-
+if uploaded_file is None:
+    if input_text is not None:
+        with st.spinner("searching"):
+            st.write(chain.invoke({'question':input_text}))
 ##Document
 if uploaded_file is not None:
-  if input_text: 
-    with st.spinner("processing your query..."):
-        file_name = uploaded_file.name
+    if input_text:
+        with st.spinner("Processing your document query..."):
+            file_name = uploaded_file.name
+            # Save file temporarily
+            file_path = os.path.join("temp", uploaded_file.name)
+            os.makedirs("temp", exist_ok=True)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.read())
+            if st.button("End query for this document"):
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)  # delete the uploaded file
+                    # If you want to delete the whole folder:
+                    if os.path.exists("temp") and not os.listdir("temp"):
+                        os.rmdir("temp")  # delete the folder if it's empty
+                except Exception as e:
+                    st.warning(f" Cleanup failed: {e}")
 
-        # Save file temporarily
-        file_path = os.path.join("temp", uploaded_file.name)
-        os.makedirs("temp", exist_ok=True)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.read())
-        # Load and split
+            # Load and split
             if file_name.endswith(".pdf"):
                 loader = PyPDFLoader(file_path)
                 docs = loader.load()
@@ -65,36 +78,26 @@ if uploaded_file is not None:
                 loader = Docx2txtLoader(file_path)
                 docs = loader.load()
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        chunks = splitter.split_documents(docs)
+            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            chunks = splitter.split_documents(docs)
 
-        # Embed and store
-        vectordb = FAISS.from_documents(chunks, embeddings)
+            # Embed and store
+            vectordb = FAISS.from_documents(chunks, embeddings)
 
-        # QA Chain
-        qa = RetrievalQA.from_chain_type(
+            # QA Chain
+            qa = RetrievalQA.from_chain_type(
             llm=llm,
             chain_type="stuff",
             retriever=vectordb.as_retriever()
             )
 
-        st.success("Document processed. Answering your questions :")
+            st.success("Document processed. Answering your questions ")
 
-        # User input
-       
-       
-         if os.path.exists(file_path):
-                    with st.spinner("searching your document"):
-                        result = qa.run(input_text)
-                        st.markdown(f"**Answer:** {result}")
-if uploaded_file is None:
-        if input_text:
-            with st.spinner("Searching..."):
-                st.write(chain.invoke({'question':input_text}))
-        else:
-          st.info("Ask your questions..")  
+            # User input
+            
+            result = qa.run(input_text)
+            st.markdown(f"**Answer:** {result}")
 
-else: 
-    if uploaded_file is None:
-        if input_text is None:
-           st.info(" Please upload a PDF file to get started.")
+if uploaded_file is None: 
+    if input_text is None:
+        st.info(" Please upload a PDF file & ask query to go.")
