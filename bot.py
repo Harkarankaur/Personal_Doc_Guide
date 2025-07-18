@@ -12,7 +12,7 @@ from langchain.chains import RetrievalQA
 import shutil
 from docx import Document
 from langchain.document_loaders import Docx2txtLoader
-
+import hashlib
 
 
 load_dotenv()
@@ -40,50 +40,71 @@ input_text=st.text_input("search the topic you want")
 with st.sidebar:
     st.title("Docs for query:")
     uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx"], key="doc_upload")
+# Utility: Generate hash for file
+def get_file_hash(file):
+    file.seek(0)
+    content = file.read()
+    file.seek(0)
+    return hashlib.md5(content).hexdigest()
+
+# Utility: Save uploaded file temporarily
+def save_uploaded_file(uploaded_file, save_path):
+    with open(save_path, "wb") as f:
+        f.write(uploaded_file.read())
 
 #open ai llm call
-
 output_parser=StrOutputParser()
 ##chain
 chain=prompt|llm|output_parser
+#text query
+if uploaded_file is None: 
+    if input_text is None:
+        st.info(" Please upload a PDF file & ask query to go.")
 if uploaded_file is None:
-    if input_text is not None:
+    if input_text:
         with st.spinner("searching"):
             st.write(chain.invoke({'question':input_text}))
 ##Document
-if uploaded_file is not None:
-    if input_text:
+if uploaded_file and input_text:
         with st.spinner("Processing your document query..."):
+            file_hash = get_file_hash(uploaded_file)
+            vectordb_path = f"vector_cache/{file_hash}"
+            os.makedirs("temp", exist_ok=True)
+            os.makedirs("vector_cache", exist_ok=True)
             file_name = uploaded_file.name
             # Save file temporarily
             file_path = os.path.join("temp", uploaded_file.name)
-            os.makedirs("temp", exist_ok=True)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.read())
+            save_uploaded_file(uploaded_file, file_path)
+            #end the query
             if st.button("End query for this document"):
                 try:
                     if os.path.exists(file_path):
                         os.remove(file_path)  # delete the uploaded file
-                    # If you want to delete the whole folder:
-                    if os.path.exists("temp") and not os.listdir("temp"):
-                        os.rmdir("temp")  # delete the folder if it's empty
+                # If you want to delete the whole folder:
+                        if os.path.exists("temp") and not os.listdir("temp"):
+                            os.rmdir("temp")  # delete the folder if it's empty
+                    if os.path.exists("vector_cache") :
+                        shutil.rmtree("vector_cache")
                 except Exception as e:
                     st.warning(f" Cleanup failed: {e}")
-
+                st.info("please start yor document query again")
             # Load and split
-            if file_name.endswith(".pdf"):
-                loader = PyPDFLoader(file_path)
-                docs = loader.load()
-            elif file_name.endswith(".docx"):      
-                loader = Docx2txtLoader(file_path)
-                docs = loader.load()
+            if os.path.exists(vectordb_path):
+                vectordb = FAISS.load_local(vectordb_path, embeddings,allow_dangerous_deserialization=True )
+            else:
+                if file_name.endswith(".pdf"):
+                    loader = PyPDFLoader(file_path)
+                    docs = loader.load()
+                elif file_name.endswith(".docx"):      
+                    loader = Docx2txtLoader(file_path)
+                    docs = loader.load()
 
-            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-            chunks = splitter.split_documents(docs)
-
+                splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                chunks = splitter.split_documents(docs)
+            
             # Embed and store
-            vectordb = FAISS.from_documents(chunks, embeddings)
-
+                vectordb = FAISS.from_documents(chunks, embeddings)
+                vectordb.save_local(vectordb_path)
             # QA Chain
             qa = RetrievalQA.from_chain_type(
             llm=llm,
@@ -98,6 +119,5 @@ if uploaded_file is not None:
             result = qa.run(input_text)
             st.markdown(f"**Answer:** {result}")
 
-if uploaded_file is None: 
-    if input_text is None:
-        st.info(" Please upload a PDF file & ask query to go.")
+
+
