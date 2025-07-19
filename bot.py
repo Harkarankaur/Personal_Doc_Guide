@@ -35,6 +35,9 @@ prompt=ChatPromptTemplate.from_messages(
 #streamlit
 st.set_page_config(page_title="Personal Guide", layout="wide")
 st.title("Guide")
+def clear_input():
+    st.session_state["query_input"]=""
+
 input_text=st.text_input("search the topic you want")
 
 with st.sidebar:
@@ -76,7 +79,7 @@ if uploaded_file and input_text:
             file_path = os.path.join("temp", uploaded_file.name)
             save_uploaded_file(uploaded_file, file_path)
             #end the query
-            if st.button("End query for this document"):
+            def end_query():
                 try:
                     if os.path.exists(file_path):
                         os.remove(file_path)  # delete the uploaded file
@@ -87,7 +90,12 @@ if uploaded_file and input_text:
                         shutil.rmtree("vector_cache")
                 except Exception as e:
                     st.warning(f" Cleanup failed: {e}")
+            def clear():
+                clear_input()
+                end_query()
                 st.info("please start yor document query again")
+            st.button("End query for this document",on_click=clear)
+
             # Load and split
             if os.path.exists(vectordb_path):
                 vectordb = FAISS.load_local(vectordb_path, embeddings,allow_dangerous_deserialization=True )
