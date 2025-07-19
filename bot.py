@@ -12,6 +12,7 @@ from langchain.chains import RetrievalQA
 import shutil
 from docx import Document
 from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import TextLoader
 import hashlib
 
 
@@ -42,7 +43,7 @@ input_text=st.text_input("search the topic you want")
 
 with st.sidebar:
     st.title("Docs for query:")
-    uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx"], key="doc_upload")
+    uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx","txt"], key="doc_upload")
 # Utility: Generate hash for file
 def get_file_hash(file):
     file.seek(0)
@@ -105,6 +106,9 @@ if uploaded_file and input_text:
                     docs = loader.load()
                 elif file_name.endswith(".docx"):      
                     loader = Docx2txtLoader(file_path)
+                    docs = loader.load()
+                elif file_name.endswith(".txt"):      
+                    loader =TextLoader(file_path)
                     docs = loader.load()
 
                 splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
