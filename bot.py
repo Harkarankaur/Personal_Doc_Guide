@@ -19,6 +19,7 @@ from docx import Document
 from langchain.document_loaders import Docx2txtLoader
 from langchain.document_loaders import TextLoader
 import hashlib
+from langchain_core.runnables import RunnableLambda
 
 
 load_dotenv()
@@ -34,8 +35,14 @@ embeddings = OllamaEmbeddings(model="llama2")
 ##creating chat bot
 prompt=ChatPromptTemplate.from_messages(
     [
-        ("system","you are a helpful assistant. Please provide reaponse to the user queries"),
-        ("user","Question:{question}")
+       (
+            "system",
+            "You are a helpful assistant. If a context is provided, answer the question using only the context. "
+            "If the answer cannot be found in the context, say: 'I cannot answer that based on the document.' "
+            "If no context is given, answer the question using your general knowledge."
+        ),
+        ("user", "Context:\n{context}\n\nQuestion: {question}")
+    
     ]
 )
 #streamlit
@@ -99,7 +106,7 @@ if uploaded_file and input_text:
             def clear():
                 clear_input()
                 end_query()
-                
+            st.info("Please re-upload to restart")    
             st.button("End query for this document",on_click=clear)
 
             # Load and split
@@ -122,19 +129,25 @@ if uploaded_file and input_text:
             # Embed and store
                 vectordb = FAISS.from_documents(chunks, embeddings)
                 vectordb.save_local(vectordb_path)
-            # QA Chain
-            qa = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vectordb.as_retriever()
-            )
 
             st.success("Document processed. Answering your questions ")
-
-            # User input
+            # QA Chain
+            retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+            retrieved_docs = retriever.get_relevant_documents(input_text)
             
-            result = qa.run(input_text)
-            st.markdown(f"**Answer:** {result}")
+            # simple length check or presence of docs
+            if not retrieved_docs:
+                st.warning(" Your query is not related to the uploaded document.")
+            else:
+                context = "\n\n".join(doc.page_content for doc in retrieved_docs)
 
+              # Run the combined chain
+                response = chain.invoke({
+                "context": context,
+                "question": input_text
+                })
+                st.markdown(f"**Answer:** {response}")
+
+           
 
 
