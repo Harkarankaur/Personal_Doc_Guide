@@ -99,7 +99,7 @@ if uploaded_file and input_text:
             def clear():
                 clear_input()
                 end_query()
-                st.info("please start yor document query again")
+                
             st.button("End query for this document",on_click=clear)
 
             # Load and split
