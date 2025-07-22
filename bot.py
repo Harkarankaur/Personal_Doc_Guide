@@ -57,6 +57,7 @@ st.set_page_config(page_title="Personal Guide", layout="wide")
 st.title("Guide")
 def clear_input():
     st.session_state["query_input"]=""
+     st.session_state["uploaded_file"]=None
 
 input_text=st.text_input("search the topic you want")
 
