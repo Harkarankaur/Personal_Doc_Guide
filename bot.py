@@ -1,5 +1,6 @@
 # ANSWER QUERY RELATED TO TXT,DOCS,PDF FILES SINGLY
-
+# PROVIDE ANSWER TO SIMPLE TEXT QUERIES
+# ON ENDING THE QUERY FREE UP THE MEMORY
 
 
 
@@ -45,6 +46,12 @@ prompt=ChatPromptTemplate.from_messages(
     
     ]
 )
+prompt1=ChatPromptTemplate.from_messages(
+    [
+        ("system","you are a helpful assistant. Please provide reaponse to the user queries"),
+        ("user","Question:{question}")
+    ]
+)
 #streamlit
 st.set_page_config(page_title="Personal Guide", layout="wide")
 st.title("Guide")
@@ -72,6 +79,7 @@ def save_uploaded_file(uploaded_file, save_path):
 output_parser=StrOutputParser()
 ##chain
 chain=prompt|llm|output_parser
+chain1=prompt1|llm|output_parser
 #text query
 if uploaded_file is None: 
     if input_text is None:
@@ -79,7 +87,7 @@ if uploaded_file is None:
 if uploaded_file is None:
     if input_text:
         with st.spinner("searching"):
-            st.write(chain.invoke({'question':input_text}))
+            st.write(chain1.invoke({'question':input_text}))
 ##Document
 if uploaded_file and input_text:
         with st.spinner("Processing your document query..."):
