@@ -94,7 +94,7 @@ if uploaded_file is None:
             response = st.write(chain1.invoke({'question':input_text}))
             st.session_state.history.append((input_text,response))
         with st.sidebar:
-            for user, bot in st.session_state.history:
+            for user in st.session_state.history:
                 st.markdown(f"**You:** {user}")
                 st.markdown("---")
                 def clean_past():
