@@ -21,7 +21,7 @@ from langchain.document_loaders import Docx2txtLoader
 from langchain.document_loaders import TextLoader
 import hashlib
 from langchain_core.runnables import RunnableLambda
-
+import uuid
 
 load_dotenv()
 
@@ -57,13 +57,13 @@ st.set_page_config(page_title="Personal Guide", layout="wide")
 st.title("Guide")
 def clear_input():
     st.session_state["query_input"]=""
-     st.session_state["uploaded_file"]=None
-
 input_text=st.text_input("search the topic you want")
+if "sidebar_key" not in st.session_state:
+    st.session_state.sidebar_key = str(uuid.uuid4())
 
 with st.sidebar:
     st.title("Docs for query:")
-    uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx","txt"], key="doc_upload")
+    uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx","txt"], key= st.session_state.sidebar_key)
 # Utility: Generate hash for file
 def get_file_hash(file):
     file.seek(0)
@@ -110,6 +110,8 @@ if uploaded_file and input_text:
                             os.rmdir("temp")  # delete the folder if it's empty
                     if os.path.exists("vector_cache") :
                         shutil.rmtree("vector_cache")
+                    st.session_state.sidebar_key = str(uuid.uuid4())
+                
                 except Exception as e:
                     st.warning(f" Cleanup failed: {e}")
             def clear():
