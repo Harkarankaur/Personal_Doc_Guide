@@ -52,31 +52,35 @@ prompt1=ChatPromptTemplate.from_messages(
         ("user","Question:{question}")
     ]
 )
+#history clear
+if "history" not in st.session_state:
+    st.session_state.history = []
 #streamlit
 st.set_page_config(page_title="Personal Guide", layout="wide")
 st.title("Guide")
 def clear_input():
     st.session_state["query_input"]=""
 input_text=st.text_input("search the topic you want")
+#doc clear
 if "sidebar_key" not in st.session_state:
     st.session_state.sidebar_key = str(uuid.uuid4())
 
 with st.sidebar:
     st.title("Docs for query:")
     uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx","txt"], key= st.session_state.sidebar_key)
-# Utility: Generate hash for file
+#  Generate hash for file
 def get_file_hash(file):
     file.seek(0)
     content = file.read()
     file.seek(0)
     return hashlib.md5(content).hexdigest()
 
-# Utility: Save uploaded file temporarily
+# Save uploaded file temporarily
 def save_uploaded_file(uploaded_file, save_path):
     with open(save_path, "wb") as f:
         f.write(uploaded_file.read())
 
-#open ai llm call
+#open llm call
 output_parser=StrOutputParser()
 ##chain
 chain=prompt|llm|output_parser
@@ -88,7 +92,20 @@ if uploaded_file is None:
 if uploaded_file is None:
     if input_text:
         with st.spinner("searching"):
-            st.write(chain1.invoke({'question':input_text}))
+            response = st.write(chain1.invoke({'question':input_text}))
+            st.session_state.history.append((input_text,response))
+        with st.sidebar:
+            for user, bot in st.session_state.history:
+                st.markdown(f"**You:** {user}")
+                st.markdown("---")
+                def clean_past():
+                    st.session_state.history =  str(uuid.uuid4())
+                def vanish():
+                    clear_input()
+                    clean_past()
+                st.button("Clear your history",on_click=vanish)
+            
+              
 ##Document
 if uploaded_file and input_text:
         with st.spinner("Processing your document query..."):
@@ -146,7 +163,7 @@ if uploaded_file and input_text:
             retriever = vectordb.as_retriever(search_type="similarity", search_kwargs={"k": 3})
             retrieved_docs = retriever.get_relevant_documents(input_text)
             
-            # simple length check or presence of docs
+            # check presence of docs
             if not retrieved_docs:
                 st.warning(" Your query is not related to the uploaded document.")
             else:
