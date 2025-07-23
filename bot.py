@@ -1,7 +1,7 @@
 # ANSWER QUERY RELATED TO TXT,DOCS,PDF FILES SINGLY
 # PROVIDE ANSWER TO SIMPLE TEXT QUERIES
 # ON ENDING THE QUERY FREE UP THE MEMORY
-
+# PROVIDE HISTORY FEATURE AND ITS CLEANUP 
 
 
 from langchain_core.prompts import ChatPromptTemplate
@@ -20,7 +20,6 @@ from docx import Document
 from langchain.document_loaders import Docx2txtLoader
 from langchain.document_loaders import TextLoader
 import hashlib
-from langchain_core.runnables import RunnableLambda
 import uuid
 
 load_dotenv()
