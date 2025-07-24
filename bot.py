@@ -67,6 +67,20 @@ if "sidebar_key" not in st.session_state:
 with st.sidebar:
     st.title("Docs for query:")
     uploaded_file = st.file_uploader("Upload the PDF document", type=["pdf","docx","txt"], key= st.session_state.sidebar_key)
+def clear_history():
+    with st.sidebar:
+        st.info ("history")
+        st.session_state.history.append(input_text)
+        for user in st.session_state.history:
+            st.markdown(f"**:** {user}")
+            st.markdown("---")
+            def clean_past():
+                st.session_state.history =  str(uuid.uuid4())
+            def vanish():
+                clear_input()
+                clean_past()
+            st.button("Clear your history",on_click=vanish, key=st.session_state.history)
+
 #  Generate hash for file
 def get_file_hash(file):
     file.seek(0)
@@ -92,18 +106,7 @@ if uploaded_file is None:
     if input_text:
         with st.spinner("searching"):
             response = st.write(chain1.invoke({'question':input_text}))
-            st.session_state.history.append((input_text,response))
-        with st.sidebar:
-            for user in st.session_state.history:
-                st.markdown(f"**You:** {user}")
-                st.markdown("---")
-                def clean_past():
-                    st.session_state.history =  str(uuid.uuid4())
-                def vanish():
-                    clear_input()
-                    clean_past()
-                st.button("Clear your history",on_click=vanish)
-            
+            clear_history()
               
 ##Document
 if uploaded_file and input_text:
@@ -174,6 +177,7 @@ if uploaded_file and input_text:
                 "question": input_text
                 })
                 st.markdown(f"**Answer:** {response}")
+                clear_history()
 
            
 
