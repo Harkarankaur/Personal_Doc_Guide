@@ -17,7 +17,7 @@ from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 import shutil
 from docx import Document
-from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import Docx2txtLoader 
 from langchain.document_loaders import TextLoader
 import hashlib
 import uuid
@@ -52,7 +52,7 @@ prompt1=ChatPromptTemplate.from_messages(
     ]
 )
 #history clear
-if "history" not in st.session_state:
+if "history" not in st.session_state or not isinstance(st.session_state.history, list):
     st.session_state.history = []
 #streamlit
 st.set_page_config(page_title="Personal Guide", layout="wide")
@@ -70,16 +70,15 @@ with st.sidebar:
 def clear_history():
     with st.sidebar:
         st.info ("history")
-        st.session_state.history.append(input_text)
         for user in st.session_state.history:
             st.markdown(f"**:** {user}")
             st.markdown("---")
-            def clean_past():
+        def clean_past():
                 st.session_state.history =  str(uuid.uuid4())
-            def vanish():
+        def vanish():
                 clear_input()
                 clean_past()
-            st.button("Clear your history",on_click=vanish, key=st.session_state.history)
+        st.button("Clear your history",on_click=vanish, key=st.session_state.history)
 
 #  Generate hash for file
 def get_file_hash(file):
@@ -105,7 +104,8 @@ if uploaded_file is None:
 if uploaded_file is None:
     if input_text:
         with st.spinner("searching"):
-            response = st.write(chain1.invoke({'question':input_text}))
+            st.write(chain1.invoke({'question':input_text}))
+            st.session_state.history.append(input_text)
             clear_history()
               
 ##Document
@@ -177,6 +177,7 @@ if uploaded_file and input_text:
                 "question": input_text
                 })
                 st.markdown(f"**Answer:** {response}")
+                st.session_state.history.append(input_text)
                 clear_history()
 
            
